@@ -1,15 +1,25 @@
-# api_debugger
+# API Debugger
 
-A reusable, in-app Dio request inspector for Flutter. It adds a draggable bug
-button, a request list, request details, copy-to-clipboard support, and a runtime
-show/hide flag.
+A modern in-app Dio network inspector for Flutter. Capture requests, responses,
+errors, headers, bodies, query parameters, status codes, and timing without
+leaving your app.
+
+## Features
+
+- Draggable network-inspector button with a request counter
+- Request, response, and Dio error capture
+- Headers, query parameters, bodies, status, timing, and timestamps
+- Modern request list and detailed inspection view
+- Copy complete request data to the clipboard
+- Runtime enable/disable switch
+- `MaterialApp` and `MaterialApp.router` support
+- Configurable in-memory log limit
 
 ## Install
 
 ```yaml
 dependencies:
-  api_debugger:
-    path: ../Debugger
+  api_debugger: ^0.1.0
 ```
 
 ## Initialize
@@ -104,3 +114,19 @@ ApiDebugger.init(
 ```
 
 `initShowDebugger` has no effect when `enabled` resolves to `false`.
+
+## Release builds
+
+The debugger is unavailable by default in release builds. Opt in with a Dart
+define:
+
+```bash
+flutter build apk --release --dart-define=SHOW_DEBUGGER=true
+```
+
+You remain responsible for ensuring sensitive headers and payloads are not
+exposed in production builds.
+
+## License
+
+MIT

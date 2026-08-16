@@ -1,0 +1,16 @@
+name: api_debugger_example
+description: Demonstrates the api_debugger package.
+publish_to: none
+
+environment:
+  sdk: ">=3.6.0 <4.0.0"
+
+dependencies:
+  api_debugger:
+    path: ../
+  dio: ^5.9.0
+  flutter:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
