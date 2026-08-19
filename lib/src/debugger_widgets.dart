@@ -12,6 +12,7 @@ class DebuggerFloatingButton extends StatefulWidget {
     required this.controller,
     required this.onPressed,
   });
+
   final ApiDebugger controller;
   final VoidCallback onPressed;
 
@@ -109,6 +110,7 @@ class DebuggerLogPanel extends StatelessWidget {
     required this.onClose,
     required this.onSelect,
   });
+
   final ApiDebugger controller;
   final VoidCallback onClose;
   final ValueChanged<ApiLogRecord> onSelect;
@@ -119,8 +121,8 @@ class DebuggerLogPanel extends StatelessWidget {
         child: SafeArea(
           child: Center(
             child: Container(
-              width: MediaQuery.sizeOf(context).width * .94,
-              height: MediaQuery.sizeOf(context).height * .86,
+              width: MediaQuery.sizeOf(context).width * .96,
+              height: MediaQuery.sizeOf(context).height * .85,
               clipBehavior: Clip.antiAlias,
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surfaceContainerLow,
@@ -369,7 +371,7 @@ class _RequestLogCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      '${record.duration?.inMilliseconds ?? '-'} ms',
+                      _formatDuration(record.duration),
                       style: TextStyle(
                         color: colors.onSurfaceVariant,
                         fontSize: 11,
@@ -456,8 +458,19 @@ class DebuggerDetailsDialog extends StatelessWidget {
     required this.record,
     this.onClose,
   });
+
   final ApiLogRecord record;
   final VoidCallback? onClose;
+
+  Color _statusColor() {
+    if (record.isError) return const Color(0xFFEF4444);
+    return const Color(0xFF10B981);
+  }
+
+  String _statusLabel() {
+    if (record.statusCode == null) return 'ERROR';
+    return record.statusCode.toString();
+  }
 
   String _pretty(dynamic value) {
     if (value == null) return 'null';
@@ -469,64 +482,305 @@ class DebuggerDetailsDialog extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) => AlertDialog(
-        title: const Text('API request details'),
-        content: SizedBox(
-          width: MediaQuery.sizeOf(context).width * .85,
-          child: SingleChildScrollView(
-            child: SelectionArea(
-              child: Column(
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final statusColor = _statusColor();
+    final uri = Uri.tryParse(record.url);
+    final title = uri?.host.isNotEmpty == true ? uri!.host : 'Request details';
+    final path = uri == null
+        ? record.url
+        : '${uri.path.isEmpty ? '/' : uri.path}${uri.hasQuery ? '?${uri.query}' : ''}';
+
+    return Dialog(
+      backgroundColor: colors.surface,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 24),
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: 720,
+          maxHeight: MediaQuery.sizeOf(context).height * .88,
+        ),
+        child: Column(
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(18, 16, 8, 14),
+              decoration: BoxDecoration(
+                color: colors.surface.withValues(alpha: .7),
+                border: Border(
+                  bottom: BorderSide(color: _neutralBorder(context)),
+                ),
+              ),
+              child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _section('URL', record.url),
-                  _section(
-                    'Method / status',
-                    '${record.method} / ${record.statusCode ?? 'ERR'}',
+                  Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: statusColor.withValues(alpha: .12),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      record.isError
+                          ? Icons.error_outline_rounded
+                          : Icons.check_circle_outline_rounded,
+                      color: statusColor,
+                    ),
                   ),
-                  _section(
-                    'Duration',
-                    '${record.duration?.inMilliseconds ?? '-'} ms',
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'API request details',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          path,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12,
+                            height: 1.25,
+                            color: colors.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  _section('Headers', _pretty(record.headers)),
-                  _section('Query', _pretty(record.queryParameters)),
-                  _section('Request body', _pretty(record.requestBody)),
-                  _section('Response body', _pretty(record.responseBody)),
-                  if (record.error != null) _section('Error', record.error!),
+                  IconButton(
+                    tooltip: 'Close',
+                    onPressed: onClose ?? () => Navigator.pop(context),
+                    icon: const Icon(Icons.close_rounded),
+                  ),
                 ],
               ),
             ),
-          ),
-        ),
-        actions: [
-          TextButton.icon(
-            onPressed: () {
-              Clipboard.setData(ClipboardData(text: _pretty(record.toJson())));
-              ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-                const SnackBar(content: Text('Copied to clipboard')),
-              );
-            },
-            icon: const Icon(Icons.copy),
-            label: const Text('Copy all'),
-          ),
-          TextButton(
-            onPressed: onClose ?? () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      );
-
-  Widget _section(String title, String value) => Padding(
-        padding: const EdgeInsets.only(bottom: 14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 4),
-            SelectableText(
-              value,
-              style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+              child: Row(
+                children: [
+                  _metric(
+                    context,
+                    icon: Icons.http_rounded,
+                    label: 'Method',
+                    value: record.method,
+                  ),
+                  const SizedBox(width: 8),
+                  _metric(
+                    context,
+                    icon: Icons.tag_rounded,
+                    label: 'Status',
+                    value: _statusLabel(),
+                    valueColor: statusColor,
+                  ),
+                  const SizedBox(width: 8),
+                  _metric(
+                    context,
+                    icon: Icons.timer_outlined,
+                    label: 'Duration',
+                    value: _formatDuration(record.duration),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+                child: SelectionArea(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _section(context, 'URL', record.url),
+                      _section(context, 'Headers', _pretty(record.headers)),
+                      _section(
+                        context,
+                        'Query parameters',
+                        _pretty(record.queryParameters),
+                      ),
+                      _section(
+                        context,
+                        'Request body',
+                        _pretty(record.requestBody),
+                      ),
+                      _section(
+                        context,
+                        'Response body',
+                        _pretty(record.responseBody),
+                      ),
+                      if (record.error != null)
+                        _section(context, 'Error', record.error!),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+              decoration: BoxDecoration(
+                color: colors.surface,
+                border: Border(
+                  top: BorderSide(color: _neutralBorder(context)),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton.icon(
+                    onPressed: () {
+                      Clipboard.setData(
+                        ClipboardData(text: _pretty(record.toJson())),
+                      );
+                      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+                        const SnackBar(content: Text('Copied to clipboard')),
+                      );
+                    },
+                    icon: const Icon(Icons.copy_rounded),
+                    label: const Text('Copy all'),
+                  ),
+                  const SizedBox(width: 6),
+                  FilledButton.tonal(
+                    onPressed: onClose ?? () => Navigator.pop(context),
+                    child: const Text('Close'),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
-      );
+      ),
+    );
+  }
+
+  Widget _metric(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required String value,
+    Color? valueColor,
+  }) {
+    final colors = Theme.of(context).colorScheme;
+    return Expanded(
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 58),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+        decoration: BoxDecoration(
+          color: colors.surfaceContainerLow,
+          border: Border.all(color: _neutralBorder(context)),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 17, color: colors.onSurfaceVariant),
+            const SizedBox(width: 7),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: colors.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      color: valueColor ?? colors.onSurface,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _section(BuildContext context, String title, String value) {
+    final colors = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: colors.surfaceContainerLowest,
+          border: Border.all(color: _neutralBorder(context)),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+              child: Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            Divider(height: 1, color: _neutralBorder(context)),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              color: colors.surfaceContainerLow.withValues(alpha: .55),
+              child: SelectableText(
+                value,
+                style: TextStyle(
+                  fontFamily: 'monospace',
+                  fontSize: 12,
+                  height: 1.35,
+                  color: colors.onSurface,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+String _formatDuration(Duration? duration) {
+  if (duration == null) return '-';
+
+  final milliseconds = duration.inMilliseconds;
+  if (milliseconds < 1000) return '${milliseconds}ms';
+
+  final seconds = milliseconds ~/ 1000;
+  final remainingMilliseconds = milliseconds.remainder(1000);
+  if (remainingMilliseconds == 0) return '${seconds}s';
+
+  return '${seconds}s ${remainingMilliseconds}ms';
 }

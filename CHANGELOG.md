@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.2 - 2026-08-19
+
+- Redesign the API request details dialog with a cleaner header, summary
+  metrics, and framed request/response sections.
+- Format request durations in a readable style, such as `4s 1ms`.
+- Restore the Android platform project for the example app.
+
 ## 0.1.1 - 2026-08-19
 
 - Update package metadata and installation docs for the `0.1.1` release.

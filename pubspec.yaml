@@ -1,6 +1,6 @@
 name: api_debugger
 description: Inspect Dio requests, responses, errors, headers, bodies, and timing in a modern in-app Flutter network debugger.
-version: 0.1.1
+version: 0.1.2
 homepage: https://github.com/sazzad765/ApiDebugger
 repository: https://github.com/sazzad765/ApiDebugger
 issue_tracker: https://github.com/sazzad765/ApiDebugger/issues

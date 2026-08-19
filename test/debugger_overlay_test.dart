@@ -1,4 +1,5 @@
 import 'package:api_debugger/api_debugger.dart';
+import 'package:api_debugger/src/debugger_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -40,5 +41,25 @@ void main() {
     expect(tester.takeException(), isNull);
 
     ApiDebugger.setEnabled(false);
+  });
+
+  testWidgets('formats details duration as seconds and milliseconds',
+      (tester) async {
+    final record = ApiLogRecord(
+      url: 'https://example.com/users',
+      method: 'GET',
+      headers: const {},
+      statusCode: 200,
+      timestamp: DateTime(2026),
+      duration: const Duration(milliseconds: 4001),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: DebuggerDetailsDialog(record: record)),
+      ),
+    );
+
+    expect(find.text('4s 1ms'), findsOneWidget);
   });
 }

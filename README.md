@@ -9,17 +9,18 @@ leaving your app.
 - Draggable network-inspector button with a request counter
 - Request, response, and Dio error capture
 - Headers, query parameters, bodies, status, timing, and timestamps
-- Modern request list and detailed inspection view
+- Modern request list and redesigned detailed inspection dialog
 - Copy complete request data to the clipboard
 - Runtime enable/disable switch
 - `MaterialApp` and `MaterialApp.router` support
 - Configurable in-memory log limit
+- Readable duration formatting, such as `4s 1ms`
 
 ## Install
 
 ```yaml
 dependencies:
-  api_debugger: ^0.1.1
+  api_debugger: ^0.1.2
 ```
 
 ## Quick start
@@ -67,9 +68,10 @@ dio.interceptors.add(ApiDebuggerInterceptor());
 
 Add the interceptor to every Dio instance that should appear in the debugger.
 The package captures URL, method, headers, query parameters, request body,
-response/error body, status code, timestamp, and duration. Keep it after any
-interceptor that adds authentication headers if those final headers should be
-visible.
+response/error body, status code, timestamp, and duration. Durations are shown
+in a readable format, for example `4s 1ms` instead of `4001ms`. Keep it after
+any interceptor that adds authentication headers if those final headers should
+be visible.
 
 ## Using `MaterialApp.router`
 
