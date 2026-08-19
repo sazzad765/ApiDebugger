@@ -19,10 +19,15 @@ leaving your app.
 
 ```yaml
 dependencies:
-  api_debugger: ^0.1.0
+  api_debugger: ^0.1.1
 ```
 
-## Initialize
+## Quick start
+
+Initialize the debugger before `runApp`, add the switch anywhere in your app UI,
+and attach the Dio interceptor to each client you want to inspect.
+
+## Navigator-key setup
 
 ```dart
 import 'package:api_debugger/api_debugger.dart';
@@ -43,8 +48,8 @@ MaterialApp(
 );
 ```
 
-The UI can be enabled or disabled anywhere. Disabling also clears captured logs.
-Use the package widget to handle visibility and reactive rebuilding:
+Use the package switch to enable or disable capture at runtime. Disabling also
+clears captured logs:
 
 ```dart
 const ApiDebuggerSwitch()
@@ -68,8 +73,8 @@ visible.
 
 ## Using `MaterialApp.router`
 
-Router-based apps do not need a navigator key. Initialize the package and host
-the debugger through the app builder:
+Router-based apps do not need a navigator key. Initialize the package without
+one and host the debugger through the app builder:
 
 ```dart
 void main() {
@@ -91,6 +96,8 @@ MaterialApp.router(
 The same `ApiDebugger.setEnabled(...)` and `ApiDebuggerInterceptor()` APIs work
 with both navigation styles. Do not supply a navigator key when using
 `ApiDebuggerOverlay`, otherwise two floating buttons can be created.
+
+## Configuration
 
 The nullable `enabled` argument controls whether the debugger is available.
 When omitted or `null`, availability follows `kDebugMode || SHOW_DEBUGGER`.
@@ -114,6 +121,18 @@ ApiDebugger.init(
 ```
 
 `initShowDebugger` has no effect when `enabled` resolves to `false`.
+
+Limit the number of records kept in memory with `maxLogs`:
+
+```dart
+ApiDebugger.init(maxLogs: 100);
+```
+
+Clear captured records manually when needed:
+
+```dart
+ApiDebugger.clear();
+```
 
 ## Release builds
 
